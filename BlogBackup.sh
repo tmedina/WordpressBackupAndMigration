@@ -10,9 +10,6 @@
 #
 ####################################################################################
 
-# Default values for mysql
-DEFAULT_DB=""
-DEFAULT_USER=""
 DEFAULT_FILES=""
 
 # get parameters for DB_NAME, DB_USER, FILES_LOC, BAK_DEST
@@ -74,6 +71,25 @@ fi
 
 mkdir -p $DEST/$TEMP || fail "Unable to create destination directory"
 
+# set wordpress files location
+if [ ! "$PARAM_FILES_LOC" == "" ]; then
+FILES_LOC=$PARAM_FILES_LOC
+else
+echo "Where are the Wordpress files [$DEFAULT_FILES]?"
+read FILES_LOC
+[ "$FILES_LOC" == "" ] && FILES_LOC=$DEFAULT_FILES
+fi
+FILES_LOC=`eval echo ${FILES_LOC//>}`
+
+while [ ! -d "${FILES_LOC}" ]; do
+echo "Can't find directory $FILES_LOC. Where are the Wordpress files?"
+read FILES_LOC
+done
+
+# Default values for mysql from existing config
+DEFAULT_DB=`grep DB_NAME ${FILES_LOC}/wp-config.php | gawk -F "," '{ print $2 }' | gawk -F "'" '{ print $2}'`
+DEFAULT_USER=`grep DB_USER ${FILES_LOC}/wp-config.php | gawk -F "," '{ print $2 }' | gawk -F "'" '{ print $2}'`
+
 #backup database
 if [ ! "$PARAM_DB_NAME" == "" ]; then
 MYSQL_DB=$PARAM_DB_NAME
@@ -103,21 +119,6 @@ fail "Failed backing up database"
 fi
 
 #backup files
-if [ ! "$PARAM_FILES_LOC" == "" ]; then
-FILES_LOC=$PARAM_FILES_LOC
-else
-echo "Where are the Wordpress files [$DEFAULT_FILES]?"
-read FILES_LOC
-[ "$FILES_LOC" == "" ] && FILES_LOC=$DEFAULT_FILES
-fi
-
-FILES_LOC=`eval echo ${FILES_LOC//>}`
-
-while [ ! -d "${FILES_LOC}" ]; do
-echo "Can't find directory $FILES_LOC. Where are the Wordpress files?"
-read FILES_LOC
-done
-
 pushd . > /dev/null
 cd ${FILES_LOC}
 echo "Backing up the files ..."
