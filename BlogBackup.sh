@@ -67,6 +67,7 @@ if [ "$MYSQL_USER" == "" ]; then
 MYSQL_USER=$DEFAULT_USER
 fi
 
+echo "Backing up the database ... "
 printf "MySQL "
 mysqldump --add-drop-table -h localhost  -u ${MYSQL_USER} -p  ${MYSQL_DB} `echo $TABLES` \
 	 | bzip2 -c \
@@ -89,21 +90,22 @@ echo "Can't find directory $FILES_LOC. Where are the Wordpress files?"
 read FILES_LOC
 done
 
-#TODO: tar files into flat directory 
-pushd . 
+pushd . > /dev/null
 cd `eval echo ${FILES_LOC//>}`
-tar cvfj $DEST/$TEMP/files.bz2 . || fail "Failed making files backup"
-popd
+echo "Backing up the files ..."
+tar cfj $DEST/$TEMP/files.tar.bz2 . || fail "Failed making files backup"
+popd > /dev/null
 
 #copy these scripts into the archive
 cp ~/Scripts/BlogBackup.sh $DEST/$TEMP/ || fail "Unable to copy BlogBackup.sh to backup directory."
 cp ~/Scripts/Migrate.sh $DEST/$TEMP/ || fail "Unable to copy Migrate.sh to backup directory."
 
 #archive everything
-pushd .
+pushd . > /dev/null
 cd $DEST
-tar cvfj BlogBackup.${DATE}.tar.bz2 backup.${DATE} || fail "Failed making BlogBackup.${DATE}.tar.bz2"
+echo "Archiving the backup ..."
+tar cfj BlogBackup.${DATE}.tar.bz2 backup.${DATE} || fail "Failed making BlogBackup.${DATE}.tar.bz2"
 rm -r $TEMP
-popd
+popd > /dev/null
 
 echo "SUCCESS!"
