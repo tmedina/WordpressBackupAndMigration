@@ -15,6 +15,26 @@ DEFAULT_DB=""
 DEFAULT_USER=""
 DEFAULT_FILES=""
 
+# get parameters for DB_NAME, DB_USER, FILES_LOC, BAK_DEST
+while getopts "f:u:n:d:" arg; do
+
+	case $arg in
+	f)
+		PARAM_FILES_LOC=$OPTARG
+		;;
+	u) 
+		PARAM_DB_USER=$OPTARG
+		;;
+	n) 
+		PARAM_DB_NAME=$OPTARG
+		;;
+	d)
+		PARAM_BAK_DEST=$OPTARG
+		;;
+		
+	esac
+done
+
 function fail
 {
 	echo $1
@@ -24,14 +44,14 @@ function fail
 
 trap "fail 'Aborted by user '" SIGINT SIGTERM
 
-DEST=$1
+DEST=$PARAM_BAK_DEST
 DATE=`date +"%Y.%m.%d"`
 TEMP=backup.${DATE}
 TABLES="wp_commentmeta wp_comments wp_links wp_options wp_postmeta wp_posts wp_term_relationships wp_term_taxonomy wp_termmeta wp_terms wp_usermeta wp_users"
 
 # Ensure a destination directory has been provided
 if [ "$DEST" == "" ]; then
-echo "usage: BlogBackup <destination_path>"
+echo "usage: BlogBackup [required: -d <backup destination>] (optional: -f <path to wordpress files> -u <mysql username> -n <mysql database>)"
 exit -1
 fi
 
@@ -55,16 +75,20 @@ fi
 mkdir -p $DEST/$TEMP || fail "Unable to create destination directory"
 
 #backup database
+if [ ! "$PARAM_DB_NAME" == "" ]; then
+MYSQL_DB=$PARAM_DB_NAME
+else
 echo "Enter the database used by wordpress [$DEFAULT_DB]:"
 read MYSQL_DB
-if [ "$MYSQL_DB" == "" ]; then
-MYSQL_DB=$DEFAULT_DB
+[ "$MYSQL_DB" == "" ] && MYSQL_DB=$DEFAULT_DB
 fi
 
+if [ ! "$PARAM_DB_USER" == "" ]; then
+MYSQL_USER=$PARAM_DB_USER
+else
 echo "Enter your MySQL Username [$DEFAULT_USER]:"
 read MYSQL_USER
-if [ "$MYSQL_USER" == "" ]; then
-MYSQL_USER=$DEFAULT_USER
+[ "$MYSQL_USER" == "" ] && MYSQL_USER=$DEFAULT_USER
 fi
 
 echo "Backing up the database ... "
@@ -79,26 +103,30 @@ fail "Failed backing up database"
 fi
 
 #backup files
+if [ ! "$PARAM_FILES_LOC" == "" ]; then
+FILES_LOC=$PARAM_FILES_LOC
+else
 echo "Where are the Wordpress files [$DEFAULT_FILES]?"
 read FILES_LOC
-if [ "$FILES_LOC" == "" ]; then
-FILES_LOC=$DEFAULT_FILES
+[ "$FILES_LOC" == "" ] && FILES_LOC=$DEFAULT_FILES
 fi
 
-while [ ! -d "`eval echo ${FILES_LOC//>}`" ]; do
+FILES_LOC=`eval echo ${FILES_LOC//>}`
+
+while [ ! -d "${FILES_LOC}" ]; do
 echo "Can't find directory $FILES_LOC. Where are the Wordpress files?"
 read FILES_LOC
 done
 
 pushd . > /dev/null
-cd `eval echo ${FILES_LOC//>}`
+cd ${FILES_LOC}
 echo "Backing up the files ..."
 tar cfj $DEST/$TEMP/files.tar.bz2 . || fail "Failed making files backup"
 popd > /dev/null
 
 #copy these scripts into the archive
-cp ~/Scripts/BlogBackup.sh $DEST/$TEMP/ || fail "Unable to copy BlogBackup.sh to backup directory."
-cp ~/Scripts/Migrate.sh $DEST/$TEMP/ || fail "Unable to copy Migrate.sh to backup directory."
+cp ./BlogBackup.sh $DEST/$TEMP/ || fail "Unable to copy BlogBackup.sh to backup directory."
+cp ./Migrate.sh $DEST/$TEMP/ || fail "Unable to copy Migrate.sh to backup directory."
 
 #archive everything
 pushd . > /dev/null

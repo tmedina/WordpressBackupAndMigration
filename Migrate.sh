@@ -28,16 +28,18 @@ fail "ERROR: gawk is required. Please install it."
 fi
 
 # DEFAULTS
-SITE_URL_DF=""
+#TODO: read URL from config
 FILES_LOC_DF=""
 
-echo "Enter the site URL: [${SITE_URL_DF}]"
-read SITE_URL
-[ "$SITE_URL" == "" ] && SITE_URL=${SITE_URL_DF}
 echo "Where is Wordpress installed? [${FILES_LOC_DF}]"
 read FILES_LOC
 [ "$FILES_LOC" == "" ] && FILES_LOC=${FILES_LOC_DF}
 FILES_LOC=`eval echo ${FILES_LOC//>}`
+
+SITE_URL_DF=`grep WP_HOME ${FILES_LOC}/wp-config.php | gawk -F "," '{ print $2 }' | gawk -F "'" '{ print $2}'`
+echo "Enter the site URL: [${SITE_URL_DF}]"
+read SITE_URL
+[ "$SITE_URL" == "" ] && SITE_URL=${SITE_URL_DF}
 
 pushd . > /dev/null
 cd ${FILES_LOC}
@@ -64,7 +66,7 @@ read -s DB_PASS
 # backup the existing database and files
 #mv ${FILES_LOC} ${FILES_LOC}.bak.`date +"%Y.%m.%d"` || fail "Unable to create directory for backups."
 echo "Backing up existing files and database:"
-./BlogBackup.sh ~ || fail "Unable to create directory for backups."
+./BlogBackup.sh -d ~ -f $FILES_LOC -u $DB_USER -n $DB_NAME || fail "Unable to create directory for backups."
 
 rm -r ${FILES_LOC}
 
