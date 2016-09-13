@@ -10,6 +10,9 @@
 #
 ###############################################################################
 
+#TODO: add an option to run with root privileges, or possibly run as www-data?
+#TODO: add a hint to always start URLs with http:// or else images etc will break
+
 # DEFAULTS
 FILES_LOC_DF=""
 
@@ -80,7 +83,8 @@ tar xfj $FILES_BAK -C ${FILES_LOC} || fail "Failed extracting backup files to $F
 bzip2 -d $DB_BAK.bz2
 echo "Importing sql data ..."
 printf "MySql "
-mysql -u $DB_USER -p -e "create database if not exists ${DB_NAME}" < ${DB_BAK} || fail "Failed exporting database backup."
+mysql -u $DB_USER -p -e "create database if not exists ${DB_NAME}" 
+mysql -u $DB_USER -p ${DB_NAME} < ${DB_BAK} || fail "Failed exporting database backup."
 
 
 # update the website's URLs
