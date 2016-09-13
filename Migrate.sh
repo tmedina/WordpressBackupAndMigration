@@ -10,9 +10,6 @@
 #
 ###############################################################################
 
-#TODO: add an option to run with root privileges, or possibly run as www-data?
-#TODO: add a hint to always start URLs with http:// or else images etc will break
-
 # DEFAULTS
 FILES_LOC_DF=""
 
@@ -40,7 +37,7 @@ read FILES_LOC
 FILES_LOC=`eval echo ${FILES_LOC//>}`
 
 SITE_URL_DF=`grep WP_HOME ${FILES_LOC}/wp-config.php | gawk -F "," '{ print $2 }' | gawk -F "'" '{ print $2}'`
-echo "Enter the site URL: [${SITE_URL_DF}]"
+echo "Enter the site URL (hint -- start with http://): [${SITE_URL_DF}]"
 read SITE_URL
 [ "$SITE_URL" == "" ] && SITE_URL=${SITE_URL_DF}
 
@@ -68,8 +65,8 @@ read DB_USER
 
 # backup the existing database and files
 #mv ${FILES_LOC} ${FILES_LOC}.bak.`date +"%Y.%m.%d"` || fail "Unable to create directory for backups."
-echo "Backing up existing files and database ..."
-./BlogBackup.sh -d ~ -f $FILES_LOC -u $DB_USER -n $DB_NAME || fail "Unable to create directory for backups."
+echo "Backing up existing files and database to /tmp ..."
+./BlogBackup.sh -d /tmp -f $FILES_LOC -u $DB_USER -n $DB_NAME || fail "Unable to create directory for backups."
 
 rm -r ${FILES_LOC}
 
