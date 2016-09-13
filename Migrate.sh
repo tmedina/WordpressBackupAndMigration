@@ -104,4 +104,13 @@ fi
 
 popd > /dev/null
 
+echo "Do you want to change ownership of $FILES_LOC [N/y]?"
+read SHOULD_CHANGE
+if [ "$SHOULD_CHANGE" == "Y" -o "$SHOULD_CHANGE" == "y" ]; then
+	echo "Enter the new user:group"
+	read NEW_USER
+
+	sudo chown -R $NEW_USER $FILES_LOC
+fi
+
 echo "SUCCESS"
