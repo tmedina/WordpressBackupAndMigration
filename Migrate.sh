@@ -36,6 +36,13 @@ read FILES_LOC
 [ "$FILES_LOC" == "" ] && FILES_LOC=${FILES_LOC_DF}
 FILES_LOC=`eval echo ${FILES_LOC//>}`
 
+touch $FILES_LOC/test.txt 2> /dev/null
+if [ $? -ne 0 ]; then 
+echo "Insufficient write permissions on $FILES_LOC. Maybe run under sudo?" 
+exit 1
+fi
+rm $FILES_LOC/test.txt > /dev/null
+
 SITE_URL_DF=`grep WP_HOME ${FILES_LOC}/wp-config.php | gawk -F "," '{ print $2 }' | gawk -F "'" '{ print $2}'`
 echo "Enter the site URL (hint -- start with http://): [${SITE_URL_DF}]"
 read SITE_URL
