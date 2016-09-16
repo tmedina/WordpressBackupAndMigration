@@ -102,6 +102,11 @@ else
 echo "WARNING: WP_SITEURL not defined in wp-config.php. You may need to reset URLs manually."
 fi
 
+echo "Updating .htaccess file ..."
+BASE_PATH=`echo $SITE_URL | awk -F'http://' '{print $2}' | awk -F'/' '{printf "/"; for(i=2;i<=NF;i++) printf "%s/", $i}'`
+sed "s|\(RewriteBase \).*|\1${BASE_PATH}|" -i .htaccess
+sed "s|\(RewriteRule \. \).*|\1${BASE_PATH}index.php [L]|" -i .htaccess
+
 popd > /dev/null
 
 echo "Do you want to change ownership of $FILES_LOC [N/y]?"
